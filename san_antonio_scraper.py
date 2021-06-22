@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.selector import Selector
+import html
+import unicodedata
 
 class BlogSpider(scrapy.Spider):
     name = 'blogspider'
@@ -8,7 +10,11 @@ class BlogSpider(scrapy.Spider):
 
     def parse(self, response):
         for title in response.css('div.post_con div.text.row div'):
-            yield {'quote': title.css('div ::text').extract_first()}
+            quote = title.css('div ::text').extract_first()
+            quote = quote.replace('\n','').replace('\t','')
+            decoded = html.unescape(quote)
+            quote = unicodedata.normalize('NFD', decoded).encode('ascii', 'ignore').decode("utf-8")
+            yield {'quote': quote}
 
         next_pages = response.css('div.pagination.row > a').extract()
         for index, page in enumerate(next_pages):
